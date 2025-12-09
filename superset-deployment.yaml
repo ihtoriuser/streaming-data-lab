@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: superset-service
+spec:
+  type: LoadBalancer 
+  selector:
+    app: superset
+  ports:
+    - protocol: TCP
+      port: 80 
+      targetPort: 8088 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: superset-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: superset
+  template:
+    metadata:
+      labels:
+        app: superset
+    spec:
+      containers:
+      - name: superset
+        image: europe-west3-docker.pkg.dev/streaming-lab-project/streaming-apps/superset-app:1.0
+        ports:
+        - containerPort: 8088
+        env:
+        - name: SUPERSET_SECRET_KEY
+          value: "165464fefsefsefs"
+        # Подключаем строку подключения к БД из нашего "сейфа"
+        - name: SQLALCHEMY_DATABASE_URI
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: superset_db_uri

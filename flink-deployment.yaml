@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-jobmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flink
+      component: jobmanager
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: jobmanager
+    spec:
+      containers:
+      - name: jobmanager
+        image: europe-west3-docker.pkg.dev/streaming-lab-project/streaming-apps/flink-app:1.0
+        args: ["jobmanager"]
+        ports:
+        - containerPort: 8081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-jobmanager
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8081
+  selector:
+    app: flink
+    component: jobmanager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-taskmanager
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flink
+      component: taskmanager
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: taskmanager
+    spec:
+      containers:
+      - name: taskmanager
+        image: europe-west3-docker.pkg.dev/streaming-lab-project/streaming-apps/flink-app:1.0
+        args: ["taskmanager"]
+        env:
+        - name: FLINK_PROPERTIES
+          value: "jobmanager.rpc.address: flink-jobmanager"
